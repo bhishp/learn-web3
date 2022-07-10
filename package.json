@@ -4,6 +4,9 @@
   "author": "bhishp",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "fmt": "prettier -c '{**/*,*}.{ts,tsx,md,mdx,json,yml,yaml}'"
+  },
   "devDependencies": {
     "prettier": "^2.7.1"
   }
