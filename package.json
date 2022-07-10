@@ -1,0 +1,10 @@
+{
+  "name": "learn-web3",
+  "version": "0.1.0",
+  "author": "bhishp",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^2.7.1"
+  }
+}
