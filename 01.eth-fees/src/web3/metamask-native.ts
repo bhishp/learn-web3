@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 
-// "exclude": [
-//       "node_modules/@metamask/detect-provider/dist/index.d.ts"
-//   ],
-
+// We have to use @ts-ignore throughout the code because we are trying to access
+// window.ethereum, which is not accutally part of the window object according to
+// the dom spec. It would be nice to define the ethereum object with the correct
+// typings on thw window, and ethers provides us a nice type to leverage (ExternalProvider),
+// however, the @metamask/detect-provider package also includes an index.d.ts file,
+// which defines the ethereum object on the window for. The type used here is
+// limited, and typescript won't let us define clashing declarations, therefore
+// we are stuck with the MM one
 // import { ExternalProvider } from "@ethersproject/providers";
 //
 // declare global {
 //   interface Window {
-//     ethereum: ExternalProvider;
+//     ethereum?: ExternalProvider;
 //   }
 // }
 
