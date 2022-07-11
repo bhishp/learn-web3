@@ -8,35 +8,37 @@ describe("calculateTxStats", () => {
       {
         from: account,
         isError: "0",
-        gasUsed: "100",
+        gasUsed: "1",
         gasPrice: "100",
       },
       {
         from: account,
         isError: "0",
-        gasUsed: "200",
+        gasUsed: "2",
         gasPrice: "200",
       },
       {
         from: account,
         isError: "1",
-        gasUsed: "300",
-        gasPrice: "90",
+        gasUsed: "3",
+        gasPrice: "100",
       },
       {
         from: account,
         isError: "0",
-        gasUsed: "400",
-        gasPrice: "110",
+        gasUsed: "4",
+        gasPrice: "100",
       },
     ];
     expect(calculateTxStats(account, txList as TX[])).toEqual({
       count: 4,
-      failedTxs: 1,
-      totalGasUsed: 1000,
-      failedTotalGasUsed: 300,
+      totalGasUsed: 10,
       totalGasPrice: 500,
       avgGasPrice: 125,
+      totalFeesPaid: 1200,
+      failedTxs: 1,
+      failedTotalGasUsed: 3,
+      failedTotalFeesPaid: 300,
     });
   });
 });

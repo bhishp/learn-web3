@@ -31,12 +31,14 @@ export type TXListResponse = {
 
 export type TxStats = {
   count: number;
-  failedTxs: number;
   totalGasUsed: number;
-  failedTotalGasUsed: number;
   totalGasPrice: number;
   avgGasPrice: number;
-  // gasUsed * gasPrice?
+  totalFeesPaid: number;
+  // failed txs
+  failedTxs: number;
+  failedTotalGasUsed: number;
+  failedTotalFeesPaid: number;
 };
 
 export const etherscanQuery = async (params: Record<string, string>, chain: ChainID) => {
@@ -60,7 +62,7 @@ export const etherscanQuery = async (params: Record<string, string>, chain: Chai
 };
 
 /**
- *
+ * All ether values represented in wei
  * @param account
  * @param txs
  */
@@ -75,21 +77,29 @@ export const calculateTxStats = (account: string | undefined, txs: TX[]): TxStat
       if (tx.from.toLowerCase() !== account.toLowerCase()) {
         return acc;
       }
+      const isError = tx.isError === "1";
+
+      const fee = parseInt(tx.gasUsed, 10) * parseInt(tx.gasPrice, 10);
 
       return {
         count: acc.count + 1,
-        failedTxs: acc.failedTxs + (tx.isError === "1" ? 1 : 0),
         totalGasUsed: acc.totalGasUsed + parseInt(tx.gasUsed, 10),
-        failedTotalGasUsed: acc.failedTotalGasUsed + (tx.isError === "1" ? parseInt(tx.gasUsed, 10) : 0),
         totalGasPrice: acc.totalGasPrice + parseInt(tx.gasPrice, 10),
+        totalFeesPaid: acc.totalFeesPaid + fee,
+        // failed Txs
+        failedTxs: acc.failedTxs + (isError ? 1 : 0),
+        failedTotalGasUsed: acc.failedTotalGasUsed + (isError ? parseInt(tx.gasUsed, 10) : 0),
+        failedTotalFeesPaid: acc.failedTotalFeesPaid + (isError ? fee : 0),
       };
     },
     {
       count: 0,
-      failedTxs: 0,
       totalGasUsed: 0,
-      failedTotalGasUsed: 0,
       totalGasPrice: 0,
+      totalFeesPaid: 0,
+      failedTxs: 0,
+      failedTotalGasUsed: 0,
+      failedTotalFeesPaid: 0,
     }
   );
 

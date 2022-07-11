@@ -1,16 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  Heading,
-  Stat,
-  StatHelpText,
-  StatLabel,
-  StatNumber,
-  VStack,
-} from "@chakra-ui/react";
+import { Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
 import { ChainID, CHAINS } from "./web3/chain";
 import { metaMask, metaMaskHooks } from "./web3/connectors";
@@ -27,6 +16,7 @@ function App() {
     connectedChainId === undefined ? "-" : CHAINS[connectedChainId as ChainID]?.name || "Unknown Chain";
 
   const [accountTransactions, setAccountTransactions] = useState<TX[]>([]);
+  const [ethUsdPrice, setEthUsdPrice] = useState<number>();
 
   const primaryAccount = accounts?.[0];
 
@@ -43,6 +33,28 @@ function App() {
   };
 
   useEffect(() => {
+    type PriceResponse = {
+      ethereum: {
+        usd: number;
+      };
+    };
+
+    (async () => {
+      const coingeckoRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      const coingeckoJson: PriceResponse = await coingeckoRes.json();
+
+      if (!coingeckoJson?.ethereum?.usd) {
+        console.warn("No ETHUSD price found");
+        return;
+      }
+
+      setEthUsdPrice(coingeckoJson.ethereum.usd);
+    })();
+
     (async () => {
       if (!primaryAccount || !connectedChainId) {
         console.info("No primary account or chainId");
@@ -66,7 +78,7 @@ function App() {
   }, [primaryAccount, connectedChainId]);
 
   const txStats = calculateTxStats(primaryAccount, accountTransactions);
-  const { count, failedTxs, totalGasUsed, avgGasPrice } = txStats || {};
+  const { count, failedTxs, totalGasUsed, avgGasPrice, totalFeesPaid, failedTotalFeesPaid } = txStats || {};
 
   return (
     <Container centerContent py="8">
@@ -98,7 +110,11 @@ function App() {
           <Stat>
             <StatLabel>Failed Transactions</StatLabel>
             <StatNumber>{failedTxs}</StatNumber>
-            <StatHelpText>This wasted Ξx</StatHelpText>
+            {failedTotalFeesPaid && (
+              <StatHelpText textColor="red.600">
+                This wasted <b>Ξ{(failedTotalFeesPaid / 1e18).toFixed(5)}</b>
+              </StatHelpText>
+            )}
           </Stat>
           <Stat>
             <StatLabel>Total gas spent</StatLabel>
@@ -106,12 +122,24 @@ function App() {
           </Stat>
           <Stat>
             <StatLabel>Average gas price</StatLabel>
-            <StatNumber>{weiToGwei(avgGasPrice!)?.toLocaleString()}</StatNumber>
+            <StatNumber>{avgGasPrice ? weiToGwei(avgGasPrice).toLocaleString() : "-"}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Total Spent</StatLabel>
-            <StatNumber>{"Ξx / $y"}</StatNumber>
-            <StatHelpText>At a rate of $x</StatHelpText>
+            {totalFeesPaid && ethUsdPrice ? (
+              <>
+                <StatNumber>{`Ξ${(totalFeesPaid / 1e18).toFixed(5)} / $${(
+                  (totalFeesPaid * ethUsdPrice) /
+                  1e18
+                ).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}</StatNumber>
+                <StatHelpText>At today's rate of ${ethUsdPrice?.toLocaleString()}</StatHelpText>
+              </>
+            ) : (
+              <StatNumber>{`Ξ- / $-`}</StatNumber>
+            )}
           </Stat>
         </VStack>
         <Button disabled={isActive} colorScheme="blue" onClick={connectWallet}>
