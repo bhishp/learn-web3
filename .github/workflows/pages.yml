@@ -12,6 +12,13 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
 
+      - name: Setup NodeJs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "yarn"
+          cache-dependency-path: ./01.eth-fees/yarn.lock
+
       - name: Install and Build 🔧
         run: |
           yarn install --frozen-lockfile

@@ -18,6 +18,7 @@ type WalletHandler = {
 /**
  * Using web3 react to interact with metamask and maintain wallet state
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const useWalletHandlerFromW3React = ({
   setError,
 }: {
