@@ -8,3 +8,10 @@ A clone of fees.wtf (before the airdrop). Connect your wallet and see how much y
   - understand ethereum transactions better and usage of etherscan's api
   - [bonus] get familiar with TheGraph's api for querying the chain
   - work with wei & gwei & ether
+
+## Notes
+
+- originally used web3 react for interacting with metamask and tracking wallet state, but followed-up with interacting
+  with MM's api directly
+  - you can see [metamask-native](./src/web3/metamask-native.ts) for code to interact with window.ethereum directly
+  - metamask should conform to [eip-1193](https://eips.ethereum.org/EIPS/eip-1193), a JS API for Ethereum Providers

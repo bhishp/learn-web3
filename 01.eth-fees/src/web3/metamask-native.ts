@@ -46,7 +46,7 @@ const computeIsActive = ({ account, chainId }: { account: string | undefined; ch
 
 // See the ethereum wallet JS API spec here: https://eips.ethereum.org/EIPS/eip-1193
 export const useRegisterMM = () => {
-  // web3 react's concept is "isActive" is computed from chainId,accounts,activating. See here: https://github.com/Uniswap/web3-react/blob/d0def622d46e93a1ea2295a08be121260c612397/packages/core/src/hooks.ts#L277
+  // web3-react's concept is "isActive" is computed from chainId,accounts,activating. See here: https://github.com/Uniswap/web3-react/blob/d0def622d46e93a1ea2295a08be121260c612397/packages/core/src/hooks.ts#L277
   const [isActive, setIsActive] = useState<boolean>(false);
   const [account, setAccount] = useState<string | undefined>();
   const [chainId, setChainId] = useState<number | undefined>();
