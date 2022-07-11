@@ -63,7 +63,6 @@ const useWalletHandlerFromMetaMask = ({
       console.warn("Metamask is not installed");
       return;
     }
-    console.log("initiate connection");
     try {
       await mmConnect();
     } catch (e: any) {
@@ -80,7 +79,7 @@ const useWalletHandlerFromMetaMask = ({
 
   return {
     connectWallet,
-    isActive: false,
+    isActive: mmState.isActive,
     account: mmState.account,
     connectedChainId: mmState.chainId,
   };
