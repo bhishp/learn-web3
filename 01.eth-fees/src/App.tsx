@@ -11,9 +11,10 @@ import {
   StatNumber,
   VStack,
 } from "@chakra-ui/react";
-import { countTotalGasUsed, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
+import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
 import { ChainID, CHAINS } from "./web3/chain";
 import { metaMask, metaMaskHooks } from "./web3/connectors";
+import { weiToGwei } from "./web3/utils";
 
 const { useIsActive, useAccounts, useChainId } = metaMaskHooks;
 
@@ -64,6 +65,9 @@ function App() {
     })();
   }, [primaryAccount, connectedChainId]);
 
+  const txStats = calculateTxStats(primaryAccount, accountTransactions);
+  const { count, failedTxs, totalGasUsed, avgGasPrice } = txStats || {};
+
   return (
     <Container centerContent py="8">
       <VStack spacing="8">
@@ -89,15 +93,20 @@ function App() {
           </Stat>
           <Stat>
             <StatLabel>Number of Transactions</StatLabel>
-            <StatNumber>{accountTransactions.length}</StatNumber>
+            <StatNumber>{count}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Failed Transactions</StatLabel>
+            <StatNumber>{failedTxs}</StatNumber>
+            <StatHelpText>This wasted Ξx</StatHelpText>
           </Stat>
           <Stat>
             <StatLabel>Total gas spent</StatLabel>
-            <StatNumber>{countTotalGasUsed(accountTransactions).toLocaleString()}</StatNumber>
+            <StatNumber>{totalGasUsed?.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Average gas price</StatLabel>
-            <StatNumber>{"-"}</StatNumber>
+            <StatNumber>{weiToGwei(avgGasPrice!)?.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Total Spent</StatLabel>

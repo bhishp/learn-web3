@@ -31,7 +31,10 @@ export type TXListResponse = {
 
 export type TxStats = {
   count: number;
+  failedTxs: number;
   totalGasUsed: number;
+  failedTotalGasUsed: number;
+  totalGasPrice: number;
   avgGasPrice: number;
   // gasUsed * gasPrice?
 };
@@ -56,7 +59,42 @@ export const etherscanQuery = async (params: Record<string, string>, chain: Chai
   return res.json();
 };
 
-export const countTotalGasUsed = (txs: TX[]): number =>
-  txs.reduce((acc, tx) => {
-    return acc + parseInt(tx.gasUsed, 10);
-  }, 0);
+/**
+ *
+ * @param account
+ * @param txs
+ */
+export const calculateTxStats = (account: string | undefined, txs: TX[]): TxStats | undefined => {
+  if (!account) {
+    return;
+  }
+
+  const calcs = txs.reduce(
+    (acc, tx) => {
+      // only interested in transactions originating from the account
+      if (tx.from.toLowerCase() !== account.toLowerCase()) {
+        return acc;
+      }
+
+      return {
+        count: acc.count + 1,
+        failedTxs: acc.failedTxs + (tx.isError === "1" ? 1 : 0),
+        totalGasUsed: acc.totalGasUsed + parseInt(tx.gasUsed, 10),
+        failedTotalGasUsed: acc.failedTotalGasUsed + (tx.isError === "1" ? parseInt(tx.gasUsed, 10) : 0),
+        totalGasPrice: acc.totalGasPrice + parseInt(tx.gasPrice, 10),
+      };
+    },
+    {
+      count: 0,
+      failedTxs: 0,
+      totalGasUsed: 0,
+      failedTotalGasUsed: 0,
+      totalGasPrice: 0,
+    }
+  );
+
+  return {
+    ...calcs,
+    avgGasPrice: calcs.totalGasPrice / calcs.count,
+  };
+};
