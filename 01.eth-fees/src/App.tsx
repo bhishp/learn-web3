@@ -1,32 +1,19 @@
-import React, { useState } from "react";
-import { Box, Button, Container, Flex, Heading, Stat, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Stat,
+  StatHelpText,
+  StatLabel,
+  StatNumber,
+  VStack,
+} from "@chakra-ui/react";
+import { countTotalGasUsed, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
+import { ChainID, CHAINS } from "./web3/chain";
 import { metaMask, metaMaskHooks } from "./web3/connectors";
-
-enum ChainID {
-  MAINNET = 1,
-  Ropsten = 3,
-  RINKEBY = 4,
-  GÖRLI = 5,
-  LOCAL = 1337,
-}
-
-const CHAINS = {
-  [ChainID.MAINNET]: {
-    name: "Mainnet",
-  },
-  [ChainID.Ropsten]: {
-    name: "Ropsten",
-  },
-  [ChainID.RINKEBY]: {
-    name: "Rinkeby",
-  },
-  [ChainID.GÖRLI]: {
-    name: "Görli",
-  },
-  [ChainID.LOCAL]: {
-    name: "Local",
-  },
-};
 
 const { useIsActive, useAccounts, useChainId } = metaMaskHooks;
 
@@ -34,9 +21,13 @@ function App() {
   const [error, setError] = useState<Error | null>(null);
   const isActive = useIsActive();
   const accounts = useAccounts();
-  const connectedChainId = useChainId();
+  const connectedChainId = useChainId() as ChainID | undefined;
   const connectedChainName =
     connectedChainId === undefined ? "-" : CHAINS[connectedChainId as ChainID]?.name || "Unknown Chain";
+
+  const [accountTransactions, setAccountTransactions] = useState<TX[]>([]);
+
+  const primaryAccount = accounts?.[0];
 
   const connectWallet = async () => {
     try {
@@ -50,6 +41,29 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      if (!primaryAccount || !connectedChainId) {
+        console.info("No primary account or chainId");
+        return;
+      }
+
+      const queryResult: TXListResponse | undefined = await etherscanQuery(
+        {
+          module: "account",
+          action: "txlist",
+          address: primaryAccount,
+          startblock: "0",
+          endblock: "99999999",
+          sort: "desc",
+        },
+        connectedChainId
+      );
+
+      setAccountTransactions(queryResult?.result || []);
+    })();
+  }, [primaryAccount, connectedChainId]);
+
   return (
     <Container centerContent py="8">
       <VStack spacing="8">
@@ -58,7 +72,7 @@ function App() {
             Eth Fees
           </Heading>
         </header>
-        <VStack alignItems="start" spacing="2">
+        <VStack alignItems="start" spacing="4">
           <Stat>
             <StatLabel>Connection</StatLabel>
             <StatNumber>
@@ -72,12 +86,23 @@ function App() {
           <Stat>
             <StatLabel>Connected Wallet</StatLabel>
             <StatNumber>{accounts?.toString() || "-"}</StatNumber>
-            {/*<StatHelpText>Feb 12 - Feb 28</StatHelpText>*/}
           </Stat>
           <Stat>
             <StatLabel>Number of Transactions</StatLabel>
-            <StatNumber>-</StatNumber>
-            {/*<StatHelpText>Feb 12 - Feb 28</StatHelpText>*/}
+            <StatNumber>{accountTransactions.length}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total gas spent</StatLabel>
+            <StatNumber>{countTotalGasUsed(accountTransactions).toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Average gas price</StatLabel>
+            <StatNumber>{"-"}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total Spent</StatLabel>
+            <StatNumber>{"Ξx / $y"}</StatNumber>
+            <StatHelpText>At a rate of $x</StatHelpText>
           </Stat>
         </VStack>
         <Button disabled={isActive} colorScheme="blue" onClick={connectWallet}>
