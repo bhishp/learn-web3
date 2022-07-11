@@ -1,4 +1,4 @@
-A clone of fees.wtf (before the airdrop). Connect your wallet and see how much you've spent in tx fees.
+A clone of [fees.wtf](fees.wtf) (before the airdrop). Connect your wallet and see how much you've spent in tx fees.
 
 ## Learnings
 
@@ -15,3 +15,4 @@ A clone of fees.wtf (before the airdrop). Connect your wallet and see how much y
   with MM's api directly
   - you can see [metamask-native](./src/web3/metamask-native.ts) for code to interact with window.ethereum directly
   - metamask should conform to [eip-1193](https://eips.ethereum.org/EIPS/eip-1193), a JS API for Ethereum Providers
+- the old fees.wtf source code is hosted here: https://github.com/Sigri44/fees.wtf/blob/main/js/main.js
