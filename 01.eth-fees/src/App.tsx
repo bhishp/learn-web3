@@ -3,22 +3,29 @@ import { Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, 
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
 import { ChainID, CHAINS } from "./web3/chain";
 import { metaMask, metaMaskHooks } from "./web3/connectors";
+import { mmConnect, mmIsInstalled, useRegisterMM } from "./web3/metamask-native";
 import { weiToGwei } from "./web3/utils";
 
 const { useIsActive, useAccounts, useChainId } = metaMaskHooks;
 
-function App() {
-  const [error, setError] = useState<Error | null>(null);
+type WalletHandler = {
+  connectWallet(): Promise<void>;
+  isActive: boolean;
+  account: string | undefined;
+  connectedChainId: ChainID | undefined;
+};
+
+/**
+ * Using web3 react to interact with metamask and maintain wallet state
+ */
+const useWalletHandlerFromW3React = ({
+  setError,
+}: {
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+}): WalletHandler => {
   const isActive = useIsActive();
   const accounts = useAccounts();
   const connectedChainId = useChainId() as ChainID | undefined;
-  const connectedChainName =
-    connectedChainId === undefined ? "-" : CHAINS[connectedChainId as ChainID]?.name || "Unknown Chain";
-
-  const [accountTransactions, setAccountTransactions] = useState<TX[]>([]);
-  const [ethUsdPrice, setEthUsdPrice] = useState<number>();
-
-  const primaryAccount = accounts?.[0];
 
   const connectWallet = async () => {
     try {
@@ -31,6 +38,65 @@ function App() {
       }
     }
   };
+
+  return {
+    connectWallet,
+    isActive,
+    account: accounts?.[0],
+    connectedChainId,
+  };
+};
+
+/**
+ * Using the window.ethereum api to interact with metamask and maintain wallet state
+ */
+const useWalletHandlerFromMetaMask = ({
+  setError,
+}: {
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+}): WalletHandler => {
+  const mmState = useRegisterMM();
+
+  const connectWallet = async () => {
+    console.log("Connect button");
+    if (!mmIsInstalled()) {
+      console.warn("Metamask is not installed");
+      return;
+    }
+    console.log("initiate connection");
+    try {
+      await mmConnect();
+    } catch (e: any) {
+      // note: Metamask docs claim that this is a ProviderRpcError, but it's actually just an object
+      // in addition, the shape returned differs from the interface defined in docs
+      // https://docs.metamask.io/guide/ethereum-provider.html#errors
+      if ("code" in e && e.code === 4001) {
+        setError(new Error("User rejected in metamask"));
+        console.error("User rejected in metamask");
+        console.info(e);
+      }
+    }
+  };
+
+  return {
+    connectWallet,
+    isActive: false,
+    account: mmState.account,
+    connectedChainId: mmState.chainId,
+  };
+};
+
+function App() {
+  const [error, setError] = useState<Error | null>(null);
+
+  // const { isActive, account, connectedChainId, connectWallet } = useWalletHandlerFromW3React({ setError });
+  const { isActive, account, connectedChainId, connectWallet } = useWalletHandlerFromMetaMask({ setError });
+
+  const connectedChainName =
+    connectedChainId === undefined ? "-" : CHAINS[connectedChainId as ChainID]?.name || "Unknown Chain";
+
+  const [accountTransactions, setAccountTransactions] = useState<TX[]>([]);
+  const [ethUsdPrice, setEthUsdPrice] = useState<number>();
 
   useEffect(() => {
     type PriceResponse = {
@@ -56,7 +122,7 @@ function App() {
     })();
 
     (async () => {
-      if (!primaryAccount || !connectedChainId) {
+      if (!account || !connectedChainId) {
         console.info("No primary account or chainId");
         return;
       }
@@ -65,7 +131,7 @@ function App() {
         {
           module: "account",
           action: "txlist",
-          address: primaryAccount,
+          address: account,
           startblock: "0",
           endblock: "99999999",
           sort: "desc",
@@ -75,9 +141,9 @@ function App() {
 
       setAccountTransactions(queryResult?.result || []);
     })();
-  }, [primaryAccount, connectedChainId]);
+  }, [account, connectedChainId]);
 
-  const txStats = calculateTxStats(primaryAccount, accountTransactions);
+  const txStats = calculateTxStats(account, accountTransactions);
   const { count, failedTxs, totalGasUsed, avgGasPrice, totalFeesPaid, failedTotalFeesPaid } = txStats || {};
 
   return (
@@ -101,7 +167,7 @@ function App() {
           </Stat>
           <Stat>
             <StatLabel>Connected Wallet</StatLabel>
-            <StatNumber>{accounts?.toString() || "-"}</StatNumber>
+            <StatNumber>{account || "-"}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Number of Transactions</StatLabel>

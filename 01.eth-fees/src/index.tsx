@@ -18,11 +18,6 @@ const colors = {
 
 const theme = extendTheme({ colors });
 
-//     "@ethersproject/bignumber": "^5.6.0",
-//     "@ethersproject/experimental": "^5.6.0",
-//     "@ethersproject/providers": "^5.6.0",
-//     "@ethersproject/units": "^5.6.0",
-
 const connectors: Web3ReactProviderProps["connectors"] = [[metaMask, metaMaskHooks]];
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
