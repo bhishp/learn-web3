@@ -1,99 +1,81 @@
 import React, { useEffect, useState } from "react";
 import { Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
+import { Select } from "@chakra-ui/react";
+import { AddEthereumChainParameter } from "@web3-react/types";
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
 import { ChainID, CHAINS } from "./web3/chain";
 import { metaMask, metaMaskHooks } from "./web3/connectors";
-import { mmConnect, mmIsInstalled, useRegisterMM } from "./web3/metamask-native";
 import { weiToGwei } from "./web3/utils";
 
 const { useIsActive, useAccounts, useChainId } = metaMaskHooks;
 
-type WalletHandler = {
-  connectWallet(): Promise<void>;
-  isActive: boolean;
-  account: string | undefined;
-  connectedChainId: ChainID | undefined;
-};
-
-/**
- * Using web3 react to interact with metamask and maintain wallet state
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const useWalletHandlerFromW3React = ({
-  setError,
+const activateMetaMask = async ({
+  desiredChainIdOrChainParameters,
+  onError,
 }: {
-  setError: React.Dispatch<React.SetStateAction<Error | null>>;
-}): WalletHandler => {
-  const isActive = useIsActive();
-  const accounts = useAccounts();
-  const connectedChainId = useChainId() as ChainID | undefined;
-
-  const connectWallet = async () => {
-    try {
-      await metaMask.activate();
-    } catch (e) {
-      if (e instanceof Error) {
-        setError(e);
-      } else {
-        setError(new Error("Unknown error"));
-      }
-    }
-  };
-
-  return {
-    connectWallet,
-    isActive,
-    account: accounts?.[0],
-    connectedChainId,
-  };
-};
-
-/**
- * Using the window.ethereum api to interact with metamask and maintain wallet state
- */
-const useWalletHandlerFromMetaMask = ({
-  setError,
-}: {
-  setError: React.Dispatch<React.SetStateAction<Error | null>>;
-}): WalletHandler => {
-  const mmState = useRegisterMM();
-
-  const connectWallet = async () => {
-    console.log("Connect button");
-    if (!mmIsInstalled()) {
-      console.warn("Metamask is not installed");
+  desiredChainIdOrChainParameters?: number | AddEthereumChainParameter;
+  onError(e: Error | undefined): void;
+}): Promise<void> => {
+  try {
+    await metaMask.activate(desiredChainIdOrChainParameters);
+  } catch (e) {
+    if (e instanceof Error) {
+      onError(e);
       return;
     }
-    try {
-      await mmConnect();
-    } catch (e: any) {
-      // note: Metamask docs claim that this is a ProviderRpcError, but it's actually just an object
-      // in addition, the shape returned differs from the interface defined in docs
-      // https://docs.metamask.io/guide/ethereum-provider.html#errors
-      if ("code" in e && e.code === 4001) {
-        setError(new Error("User rejected in metamask"));
-        console.error("User rejected in metamask");
-        console.info(e);
-      }
+    if ("message" in (e as any)) {
+      onError(new Error((e as any).message));
+      return;
     }
-  };
+    onError(new Error("Unknown error"));
+  }
+  onError(undefined);
+  console.log("Connected to chain", desiredChainIdOrChainParameters);
+};
 
-  return {
-    connectWallet,
-    isActive: mmState.isActive,
-    account: mmState.account,
-    connectedChainId: mmState.chainId,
-  };
+const SelectNetwork = ({ setError }: { setError: React.Dispatch<React.SetStateAction<Error | undefined>> }) => {
+  const connectedChainId = useChainId() as ChainID | undefined;
+  const placeholder = "__placeholder";
+
+  return (
+    <Select
+      size="lg"
+      value={connectedChainId || placeholder}
+      onChange={async (e) => {
+        const newChain = parseInt(e.target.value, 10);
+        if (connectedChainId === newChain) {
+          console.info("Already connected to this chain, do nothing");
+          return;
+        }
+        await activateMetaMask({
+          desiredChainIdOrChainParameters: newChain,
+          onError: setError,
+        });
+      }}
+    >
+      <option value={placeholder}>Select Chain</option>
+      {Object.entries(CHAINS).map(([id, { name }]) => (
+        <option key={id} value={id}>
+          {name}
+        </option>
+      ))}
+    </Select>
+  );
 };
 
 function App() {
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<Error | undefined>(undefined);
 
-  // const { isActive, account, connectedChainId, connectWallet } = useWalletHandlerFromW3React({ setError });
-  const { isActive, account, connectedChainId, connectWallet } = useWalletHandlerFromMetaMask({ setError });
+  const isActive = useIsActive();
+  const accounts = useAccounts();
+  const account = accounts?.[0];
+  const connectedChainId = useChainId() as ChainID | undefined;
 
-  const connectedChainName =
-    connectedChainId === undefined ? "-" : CHAINS[connectedChainId as ChainID]?.name || "Unknown Chain";
+  const connectWallet = async () => {
+    await activateMetaMask({
+      onError: setError,
+    });
+  };
 
   const [accountTransactions, setAccountTransactions] = useState<TX[]>([]);
   const [ethUsdPrice, setEthUsdPrice] = useState<number>();
@@ -163,7 +145,10 @@ function App() {
           </Stat>
           <Stat>
             <StatLabel>Chain</StatLabel>
-            <StatNumber>{connectedChainName}</StatNumber>
+            <StatNumber>
+              <SelectNetwork setError={setError} />
+            </StatNumber>
+            <StatHelpText>You can switch networks from here or via your wallet</StatHelpText>
           </Stat>
           <Stat>
             <StatLabel>Connected Wallet</StatLabel>

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { ChainID } from "./chain";
 
 // We have to use @ts-ignore throughout the code because we are trying to access
 // window.ethereum, which is not actually part of the window object according to
@@ -106,5 +107,50 @@ export const useRegisterMM = () => {
     isActive,
     account,
     chainId,
+  };
+};
+
+type WalletHandler = {
+  connectWallet(): Promise<void>;
+  isActive: boolean;
+  account: string | undefined;
+  connectedChainId: ChainID | undefined;
+};
+
+/**
+ * Using the window.ethereum api to interact with metamask and maintain wallet state
+ */
+export const useWalletHandlerFromMetaMask = ({
+  setError,
+}: {
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+}): WalletHandler => {
+  const mmState = useRegisterMM();
+
+  const connectWallet = async () => {
+    console.log("Connect button");
+    if (!mmIsInstalled()) {
+      console.warn("Metamask is not installed");
+      return;
+    }
+    try {
+      await mmConnect();
+    } catch (e: any) {
+      // note: Metamask docs claim that this is a ProviderRpcError, but it's actually just an object
+      // in addition, the shape returned differs from the interface defined in docs
+      // https://docs.metamask.io/guide/ethereum-provider.html#errors
+      if ("code" in e && e.code === 4001) {
+        setError(new Error("User rejected in metamask"));
+        console.error("User rejected in metamask");
+        console.info(e);
+      }
+    }
+  };
+
+  return {
+    connectWallet,
+    isActive: mmState.isActive,
+    account: mmState.account,
+    connectedChainId: mmState.chainId,
   };
 };
