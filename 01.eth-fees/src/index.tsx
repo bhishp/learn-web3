@@ -4,7 +4,7 @@ import { Web3ReactProvider } from "@web3-react/core";
 import { Web3ReactProviderProps } from "@web3-react/core/dist/provider";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App";
+import App from "./app";
 import reportWebVitals from "./reportWebVitals";
 import { metaMask, metaMaskHooks } from "./web3/connectors";
 

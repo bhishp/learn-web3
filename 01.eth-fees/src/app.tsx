@@ -1,67 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
-import { Select } from "@chakra-ui/react";
-import { AddEthereumChainParameter } from "@web3-react/types";
+import { SelectNetwork } from "./components/select-network";
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
-import { ChainID, CHAINS } from "./web3/chain";
-import { metaMask, metaMaskHooks } from "./web3/connectors";
+import { ChainID } from "./web3/chain";
+import { activateMetaMask, metaMaskHooks } from "./web3/connectors";
 import { weiToGwei } from "./web3/utils";
 
 const { useIsActive, useAccounts, useChainId } = metaMaskHooks;
-
-const activateMetaMask = async ({
-  desiredChainIdOrChainParameters,
-  onError,
-}: {
-  desiredChainIdOrChainParameters?: number | AddEthereumChainParameter;
-  onError(e: Error | undefined): void;
-}): Promise<void> => {
-  try {
-    await metaMask.activate(desiredChainIdOrChainParameters);
-  } catch (e) {
-    if (e instanceof Error) {
-      onError(e);
-      return;
-    }
-    if ("message" in (e as any)) {
-      onError(new Error((e as any).message));
-      return;
-    }
-    onError(new Error("Unknown error"));
-  }
-  onError(undefined);
-  console.log("Connected to chain", desiredChainIdOrChainParameters);
-};
-
-const SelectNetwork = ({ setError }: { setError: React.Dispatch<React.SetStateAction<Error | undefined>> }) => {
-  const connectedChainId = useChainId() as ChainID | undefined;
-  const placeholder = "__placeholder";
-
-  return (
-    <Select
-      size="lg"
-      value={connectedChainId || placeholder}
-      onChange={async (e) => {
-        const newChain = parseInt(e.target.value, 10);
-        if (connectedChainId === newChain) {
-          console.info("Already connected to this chain, do nothing");
-          return;
-        }
-        await activateMetaMask({
-          desiredChainIdOrChainParameters: newChain,
-          onError: setError,
-        });
-      }}
-    >
-      <option value={placeholder}>Select Chain</option>
-      {Object.entries(CHAINS).map(([id, { name }]) => (
-        <option key={id} value={id}>
-          {name}
-        </option>
-      ))}
-    </Select>
-  );
-};
 
 function App() {
   const [error, setError] = useState<Error | undefined>(undefined);
