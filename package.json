@@ -5,6 +5,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "clean": "rm -rf build && mkdir build",
+    "build": "yarn clean && cp index.html ./build && yarn build:eth-fees",
+    "build:eth-fees": "yarn --cwd ./01.eth-fees/ install --frozen-lockfile && yarn --cwd ./01.eth-fees/ build && cp -r ./01.eth-fees/build/ ./build/eth-fees",
     "fmt": "prettier -c '{**/*,*}.{ts,tsx,md,mdx,json,yml,yaml}'"
   },
   "devDependencies": {

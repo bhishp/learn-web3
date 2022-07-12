@@ -4,6 +4,7 @@
   "private": true,
   "author": "bhishp",
   "license": "MIT",
+  "homepage": "https://bhishp.github.io/learn-web3/eth-fees",
   "dependencies": {
     "@chakra-ui/react": "^2.2.1",
     "@emotion/react": "^11.9.3",

@@ -17,15 +17,14 @@ jobs:
         with:
           node-version: 16.x
           cache: "yarn"
-          cache-dependency-path: ./01.eth-fees/yarn.lock
+          cache-dependency-path: |
+            ./01.eth-fees/yarn.lock
 
-      - name: Install and Build 🔧
+      - name: Build 🔧
         run: |
-          yarn install --frozen-lockfile
           yarn build
-        working-directory: ./01.eth-fees
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./01.eth-fees/build
+          folder: ./build
