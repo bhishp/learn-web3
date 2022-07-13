@@ -1,3 +1,4 @@
+import { BigNumber } from "@ethersproject/bignumber";
 import { ChainID, CHAINS } from "../web3/chain";
 
 const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
@@ -31,14 +32,14 @@ export type TXListResponse = {
 
 export type TxStats = {
   count: number;
-  totalGasUsed: number;
-  totalGasPrice: number;
-  avgGasPrice: number;
-  totalFeesPaid: number;
+  totalGasUsed: BigNumber;
+  totalGasPrice: BigNumber;
+  avgGasPrice: BigNumber;
+  totalFeesPaid: BigNumber;
   // failed txs
-  failedTxs: number;
-  failedTotalGasUsed: number;
-  failedTotalFeesPaid: number;
+  failedTxsCount: number;
+  failedTotalGasUsed: BigNumber;
+  failedTotalFeesPaid: BigNumber;
 };
 
 export const etherscanQuery = async (params: Record<string, string>, chain: ChainID) => {
@@ -79,32 +80,32 @@ export const calculateTxStats = (account: string | undefined, txs: TX[]): TxStat
       }
       const isError = tx.isError === "1";
 
-      const fee = parseInt(tx.gasUsed, 10) * parseInt(tx.gasPrice, 10);
+      const fee = BigNumber.from(tx.gasUsed).mul(BigNumber.from(tx.gasPrice));
 
       return {
         count: acc.count + 1,
-        totalGasUsed: acc.totalGasUsed + parseInt(tx.gasUsed, 10),
-        totalGasPrice: acc.totalGasPrice + parseInt(tx.gasPrice, 10),
-        totalFeesPaid: acc.totalFeesPaid + fee,
+        totalGasUsed: acc.totalGasUsed.add(BigNumber.from(tx.gasUsed)),
+        totalGasPrice: acc.totalGasPrice.add(BigNumber.from(tx.gasPrice)),
+        totalFeesPaid: acc.totalFeesPaid.add(fee),
         // failed Txs
-        failedTxs: acc.failedTxs + (isError ? 1 : 0),
-        failedTotalGasUsed: acc.failedTotalGasUsed + (isError ? parseInt(tx.gasUsed, 10) : 0),
-        failedTotalFeesPaid: acc.failedTotalFeesPaid + (isError ? fee : 0),
+        failedTxsCount: acc.failedTxsCount + (isError ? 1 : 0),
+        failedTotalGasUsed: acc.failedTotalGasUsed.add(isError ? BigNumber.from(tx.gasUsed) : 0),
+        failedTotalFeesPaid: acc.failedTotalFeesPaid.add(isError ? fee : 0),
       };
     },
     {
       count: 0,
-      totalGasUsed: 0,
-      totalGasPrice: 0,
-      totalFeesPaid: 0,
-      failedTxs: 0,
-      failedTotalGasUsed: 0,
-      failedTotalFeesPaid: 0,
+      totalGasUsed: BigNumber.from(0),
+      totalGasPrice: BigNumber.from(0),
+      totalFeesPaid: BigNumber.from(0),
+      failedTxsCount: 0,
+      failedTotalGasUsed: BigNumber.from(0),
+      failedTotalFeesPaid: BigNumber.from(0),
     }
   );
 
   return {
     ...calcs,
-    avgGasPrice: calcs.totalGasPrice / calcs.count,
+    avgGasPrice: calcs.totalGasPrice.div(calcs.count || 1),
   };
 };

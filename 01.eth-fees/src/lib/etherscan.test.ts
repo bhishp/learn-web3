@@ -1,3 +1,4 @@
+import { BigNumber } from "@ethersproject/bignumber";
 import { calculateTxStats, TX } from "./etherscan";
 
 describe("calculateTxStats", () => {
@@ -32,13 +33,13 @@ describe("calculateTxStats", () => {
     ];
     expect(calculateTxStats(account, txList as TX[])).toEqual({
       count: 4,
-      totalGasUsed: 10,
-      totalGasPrice: 500,
-      avgGasPrice: 125,
-      totalFeesPaid: 1200,
-      failedTxs: 1,
-      failedTotalGasUsed: 3,
-      failedTotalFeesPaid: 300,
+      totalGasUsed: BigNumber.from("10"),
+      totalGasPrice: BigNumber.from("500"),
+      avgGasPrice: BigNumber.from("125"),
+      totalFeesPaid: BigNumber.from("1200"),
+      failedTxsCount: 1,
+      failedTotalGasUsed: BigNumber.from("3"),
+      failedTotalFeesPaid: BigNumber.from("300"),
     });
   });
 });

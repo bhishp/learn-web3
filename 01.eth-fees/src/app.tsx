@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
+import { BigNumber } from "@ethersproject/bignumber";
+import { formatEther, formatUnits } from "@ethersproject/units";
 import { SelectNetwork } from "./components/select-network";
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
 import { checkChainSupported, getChainName } from "./web3/chain";
 import { activateMetaMask, metaMaskHooks } from "./web3/connectors";
-import { weiToGwei } from "./web3/utils";
+import { roundTo } from "./web3/utils";
 
 const { useIsActive, useAccounts, useChainId } = metaMaskHooks;
 
@@ -24,7 +26,7 @@ function App() {
   };
 
   const [accountTransactions, setAccountTransactions] = useState<TX[]>([]);
-  const [ethUsdPrice, setEthUsdPrice] = useState<number>();
+  const [ethCentsPrice, setEthCentsPrice] = useState<BigNumber>();
 
   useEffect(() => {
     type PriceResponse = {
@@ -46,7 +48,9 @@ function App() {
         return;
       }
 
-      setEthUsdPrice(coingeckoJson.ethereum.usd);
+      // arrives as a 2dp number, e.g. 1080.63
+      const cents = (coingeckoJson.ethereum.usd * 100).toFixed(0);
+      setEthCentsPrice(BigNumber.from(cents));
     })();
 
     (async () => {
@@ -72,7 +76,7 @@ function App() {
   }, [account, connectedChainId]);
 
   const txStats = calculateTxStats(account, accountTransactions);
-  const { count, failedTxs, totalGasUsed, avgGasPrice, totalFeesPaid, failedTotalFeesPaid } = txStats || {};
+  const { count, failedTxsCount, totalGasUsed, avgGasPrice, totalFeesPaid, failedTotalFeesPaid } = txStats || {};
 
   return (
     <Box w="full" overflowX="hidden">
@@ -114,10 +118,12 @@ function App() {
             </Stat>
             <Stat>
               <StatLabel>Failed Transactions</StatLabel>
-              <StatNumber>{failedTxs}</StatNumber>
+              <StatNumber>{failedTxsCount}</StatNumber>
               {!!failedTotalFeesPaid && (
                 <StatHelpText textColor="red.600">
-                  This wasted <b>Ξ{(failedTotalFeesPaid / 1e18).toFixed(5)}</b>
+                  <>
+                    This wasted <b>Ξ{roundTo(formatEther(failedTotalFeesPaid), 5)}</b>
+                  </>
                 </StatHelpText>
               )}
             </Stat>
@@ -127,20 +133,18 @@ function App() {
             </Stat>
             <Stat>
               <StatLabel>Average gas price</StatLabel>
-              <StatNumber>{avgGasPrice ? weiToGwei(avgGasPrice).toLocaleString() : "-"}</StatNumber>
+              <StatNumber>{avgGasPrice ? roundTo(formatUnits(avgGasPrice, "gwei"), 3) + " gwei" : "-"}</StatNumber>
             </Stat>
             <Stat>
               <StatLabel>Total Spent</StatLabel>
-              {totalFeesPaid && ethUsdPrice ? (
+              {totalFeesPaid && ethCentsPrice ? (
                 <>
-                  <StatNumber>{`Ξ${(totalFeesPaid / 1e18).toFixed(5)} / $${(
-                    (totalFeesPaid * ethUsdPrice) /
-                    1e18
-                  ).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`}</StatNumber>
-                  <StatHelpText>At today's rate of ${ethUsdPrice?.toLocaleString()}</StatHelpText>
+                  <StatNumber>{`Ξ${roundTo(formatEther(totalFeesPaid), 5)} / $${roundTo(
+                    formatEther(ethCentsPrice.mul(totalFeesPaid).div(100)),
+                    2
+                  )}
+                    `}</StatNumber>
+                  <StatHelpText>At today's rate of ${ethCentsPrice?.toLocaleString()}</StatHelpText>
                 </>
               ) : (
                 <StatNumber>{`Ξ- / $-`}</StatNumber>
