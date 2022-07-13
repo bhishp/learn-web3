@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
 import { SelectNetwork } from "./components/select-network";
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
-import { ChainID } from "./web3/chain";
+import { checkChainSupported, getChainName } from "./web3/chain";
 import { activateMetaMask, metaMaskHooks } from "./web3/connectors";
 import { weiToGwei } from "./web3/utils";
 
@@ -14,7 +14,8 @@ function App() {
   const isActive = useIsActive();
   const accounts = useAccounts();
   const account = accounts?.[0];
-  const connectedChainId = useChainId() as ChainID | undefined;
+  const connectedChainId = useChainId();
+  const isChainSupported = checkChainSupported(connectedChainId);
 
   const connectWallet = async () => {
     await activateMetaMask({
@@ -86,7 +87,14 @@ function App() {
             <Stat>
               <StatLabel>Connection</StatLabel>
               <StatNumber>
-                {error ? `Error 🔴 ${error.message}` : isActive ? "Connected 🟢" : "Not connected ⚪"}️
+                {!isChainSupported
+                  ? `🔴 ${getChainName(connectedChainId)} not supported, please switch chains`
+                  : error
+                  ? `🔴 Error ${error.message}`
+                  : isActive
+                  ? "🟢 Connected"
+                  : "⚪ Not connected"}
+                ️
               </StatNumber>
             </Stat>
             <Stat>
