@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
+import { Box, Button, Container, Heading, Stat, StatHelpText, StatLabel, StatNumber, VStack } from "@chakra-ui/react";
 import { SelectNetwork } from "./components/select-network";
 import { calculateTxStats, etherscanQuery, TX, TXListResponse } from "./lib/etherscan";
 import { ChainID } from "./web3/chain";
@@ -74,75 +74,77 @@ function App() {
   const { count, failedTxs, totalGasUsed, avgGasPrice, totalFeesPaid, failedTotalFeesPaid } = txStats || {};
 
   return (
-    <Container centerContent py="8">
-      <VStack spacing="8">
-        <header>
-          <Heading as="h1" size="4xl">
-            Eth Fees
-          </Heading>
-        </header>
-        <VStack alignItems="start" spacing="4">
-          <Stat>
-            <StatLabel>Connection</StatLabel>
-            <StatNumber>
-              {error ? `Error 🔴 ${error.message}` : isActive ? "Connected 🟢" : "Not connected ⚪"}️
-            </StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Chain</StatLabel>
-            <StatNumber>
-              <SelectNetwork setError={setError} />
-            </StatNumber>
-            <StatHelpText>You can switch networks from here or via your wallet</StatHelpText>
-          </Stat>
-          <Stat>
-            <StatLabel>Connected Wallet</StatLabel>
-            <StatNumber>{account || "-"}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Number of Transactions</StatLabel>
-            <StatNumber>{count}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Failed Transactions</StatLabel>
-            <StatNumber>{failedTxs}</StatNumber>
-            {failedTotalFeesPaid && (
-              <StatHelpText textColor="red.600">
-                This wasted <b>Ξ{(failedTotalFeesPaid / 1e18).toFixed(5)}</b>
-              </StatHelpText>
-            )}
-          </Stat>
-          <Stat>
-            <StatLabel>Total gas spent</StatLabel>
-            <StatNumber>{totalGasUsed?.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Average gas price</StatLabel>
-            <StatNumber>{avgGasPrice ? weiToGwei(avgGasPrice).toLocaleString() : "-"}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total Spent</StatLabel>
-            {totalFeesPaid && ethUsdPrice ? (
-              <>
-                <StatNumber>{`Ξ${(totalFeesPaid / 1e18).toFixed(5)} / $${(
-                  (totalFeesPaid * ethUsdPrice) /
-                  1e18
-                ).toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`}</StatNumber>
-                <StatHelpText>At today's rate of ${ethUsdPrice?.toLocaleString()}</StatHelpText>
-              </>
-            ) : (
-              <StatNumber>{`Ξ- / $-`}</StatNumber>
-            )}
-          </Stat>
+    <Box w="full" overflowX="hidden">
+      <Container centerContent py="8">
+        <VStack w="full" spacing="8">
+          <header>
+            <Heading as="h1" size="4xl">
+              Eth Fees
+            </Heading>
+          </header>
+          <VStack w="full" alignItems="start" spacing="4">
+            <Stat>
+              <StatLabel>Connection</StatLabel>
+              <StatNumber>
+                {error ? `Error 🔴 ${error.message}` : isActive ? "Connected 🟢" : "Not connected ⚪"}️
+              </StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Chain</StatLabel>
+              <StatNumber>
+                <SelectNetwork setError={setError} />
+              </StatNumber>
+              <StatHelpText>You can switch networks from here or via your wallet</StatHelpText>
+            </Stat>
+            <Stat w="full">
+              <StatLabel>Connected Wallet</StatLabel>
+              <StatNumber>{account || "-"}</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Number of Transactions</StatLabel>
+              <StatNumber>{count}</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Failed Transactions</StatLabel>
+              <StatNumber>{failedTxs}</StatNumber>
+              {!!failedTotalFeesPaid && (
+                <StatHelpText textColor="red.600">
+                  This wasted <b>Ξ{(failedTotalFeesPaid / 1e18).toFixed(5)}</b>
+                </StatHelpText>
+              )}
+            </Stat>
+            <Stat>
+              <StatLabel>Total gas spent</StatLabel>
+              <StatNumber>{totalGasUsed?.toLocaleString()}</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Average gas price</StatLabel>
+              <StatNumber>{avgGasPrice ? weiToGwei(avgGasPrice).toLocaleString() : "-"}</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Total Spent</StatLabel>
+              {totalFeesPaid && ethUsdPrice ? (
+                <>
+                  <StatNumber>{`Ξ${(totalFeesPaid / 1e18).toFixed(5)} / $${(
+                    (totalFeesPaid * ethUsdPrice) /
+                    1e18
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`}</StatNumber>
+                  <StatHelpText>At today's rate of ${ethUsdPrice?.toLocaleString()}</StatHelpText>
+                </>
+              ) : (
+                <StatNumber>{`Ξ- / $-`}</StatNumber>
+              )}
+            </Stat>
+          </VStack>
+          <Button disabled={isActive} colorScheme="blue" onClick={connectWallet}>
+            Connect Wallet
+          </Button>
         </VStack>
-        <Button disabled={isActive} colorScheme="blue" onClick={connectWallet}>
-          Connect Wallet
-        </Button>
-      </VStack>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 
