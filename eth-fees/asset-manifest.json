@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/learn-web3/eth-fees/static/css/main.e6c13ad2.css",
-    "main.js": "/learn-web3/eth-fees/static/js/main.f0200d28.js",
+    "main.js": "/learn-web3/eth-fees/static/js/main.d602a960.js",
     "static/js/787.bb9a8389.chunk.js": "/learn-web3/eth-fees/static/js/787.bb9a8389.chunk.js",
     "index.html": "/learn-web3/eth-fees/index.html",
     "main.e6c13ad2.css.map": "/learn-web3/eth-fees/static/css/main.e6c13ad2.css.map",
-    "main.f0200d28.js.map": "/learn-web3/eth-fees/static/js/main.f0200d28.js.map",
+    "main.d602a960.js.map": "/learn-web3/eth-fees/static/js/main.d602a960.js.map",
     "787.bb9a8389.chunk.js.map": "/learn-web3/eth-fees/static/js/787.bb9a8389.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.f0200d28.js"
+    "static/js/main.d602a960.js"
   ]
 }
